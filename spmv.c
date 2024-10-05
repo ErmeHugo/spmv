@@ -57,6 +57,35 @@ unsigned int check_result(double ref[], double result[], unsigned int size)
   return 1;
 }
 
+typedef struct {
+    double *values;   // Non-zero values
+    int *col_i;       // Column indices of non-zero values
+    int *offset;      // Row pointer array
+} CSR_Matrix;
+
+CSR_Matrix convert_to_csr(double mat[], int size,int nnz)
+{
+  CSR_Matrix csr;
+
+  csr.offset = (int *)malloc((size+1)*sizeof(int));
+  csr.col_i = (int *)malloc(nnz*sizeof(int));
+  csr.values = (double *)malloc(nnz*sizeof(double));
+  
+  int count = 0;
+  for (int i=0; i<size; i++){
+    csr.offset[i] = count;
+    for (int j=0; j<size; j++){
+      if (mat[size*i + j] != 0){
+        csr.values[count] = mat[size*i + j];
+        csr.col_i[count] = j;
+        count++;
+      }
+    }
+  }
+  csr.offset[size] = count;
+  return csr;
+}
+
 int main(int argc, char *argv[])
 {
   int size;        // number of rows and cols (size x size matrix)
@@ -120,6 +149,8 @@ int main(int argc, char *argv[])
   //
 
   // Convert mat to a sparse format: CSR
+  CSR_Matrix csr;
+  csr = convert_to_csr(mat,size,nnz);
   // Use the gsl_spmatrix struct as datatype
 
   //
