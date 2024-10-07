@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <gsl/gsl_cblas.h>      // CBLAS in GSL (the GNU Scientific Library)
-//#include <gsl/gsl_spmatrix.h>
-//#include <gsl/gsl_vector.h>
+#include <gsl/gsl_spmatrix.h>
+#include <gsl/gsl_vector.h>
 #include "timer.h"
 #include "spmv.h"
 
@@ -151,16 +151,34 @@ int main(int argc, char *argv[])
   // Convert mat to a sparse format: CSR
   CSR_Matrix csr;
   csr = convert_to_csr(mat,size,nnz);
+  /*
   // Use the gsl_spmatrix struct as datatype
+  gsl_matrix_view gsl_mat_view = gsl_matrix_view_array(mat, size, size);
+  gsl_vector_view gsl_vec_view = gsl_vector_view_array(vec, size);
 
+  gsl_matrix *gsl_mat = &gsl_mat_view.matrix;
+  gsl_vector *gsl_vec = &gsl_vec_view.vector;
+  gsl_spmatrix *gsl_mat_csr;
+
+  gsl_spmatrix_csr(*gsl_mat_csr, *gsl_mat);
   //
   // Sparse computation using GSL's sparse algebra functions
   //
+  printf("Dense computation\n----------------\n");
 
+  timestamp(&start);
+  gsl_vector *result = gsl_vector_alloc(size);
+
+  // Perform the matrix-vector multiplication 
+  cgsl_cblas_dgemv(CblasNoTrans, 1.0, gsl_mat, gsl_vec, 0.0, result);
+
+  timestamp(&now);
+  printf("Time taken by GSL CBLAS dense computation: %ld ms\n", diff_milli(&start, &now));
+  */
   //
   // Your own sparse implementation
   //
-
+  my_sparse(csr.values, csr.col_i, csr.offset, vec, mysol, size);
   // Compare times (and computation correctness!)
 
 
