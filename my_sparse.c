@@ -38,7 +38,7 @@ int my_sparse_csc(const double *values, const int *row_j, const int *offset,
   }
 
 // Function to multiply COO matrix by vector
-int my_sparse_coo(const double *values, const int *col_i, const int *row_i, 
+int my_sparse_coo(const double *values, const int *row_i, const int *col_j, 
               const double *vec, double *result, int nnz, int size)
 {
     // Initialize the result vector to zero
@@ -48,7 +48,7 @@ int my_sparse_coo(const double *values, const int *col_i, const int *row_i,
 
     // Perform the matrix-vector multiplication using COO format
     for (int i = 0; i < nnz; ++i) {
-        result[row_i[i]] += values[i] * vec[col_i[i]];
+        result[row_i[i]] += values[i] * vec[col_j[i]];
     }
     
     return 1;

@@ -8,8 +8,8 @@
 #include "timer.h"
 #include "spmv.h"
 
-#define DEFAULT_SIZE 2048
-#define DEFAULT_DENSITY 0.25
+#define DEFAULT_SIZE 16384
+#define DEFAULT_DENSITY 0.1
 
 unsigned int populate_sparse_matrix(double mat[], unsigned int n, double density, unsigned int seed)
 {
@@ -228,7 +228,11 @@ int main(int argc, char *argv[])
 
   // Use the gsl_spmatrix struct as datatype
   gsl_spmatrix *sp = gsl_spmatrix_alloc(size, size);
+  gsl_spmatrix *sp_csr;
+  gsl_spmatrix *sp_csc;
   
+
+   
   for (int i = 0; i < size; i++) {
     for (int j = 0; j < size; j++) {
       if (mat[i * size + j] != 0) {
@@ -236,6 +240,10 @@ int main(int argc, char *argv[])
         }
     }
   }
+
+  // Copy the matrix into the ccs and crs format
+  sp_csc = gsl_spmatrix_ccs(sp);
+  sp_csr = gsl_spmatrix_crs(sp);
   
   gsl_vector *x = gsl_vector_alloc(size);
   for (int i = 0; i < size; i++) {
@@ -253,10 +261,31 @@ int main(int argc, char *argv[])
   timestamp(&start);
   gsl_spblas_dgemv(CblasNoTrans, 1, sp, x, 0, result);
   timestamp(&now);
-  printf("Time taken by SPBlas dense computation: %ld ms\n", diff_milli(&start, &now));
-  
+  printf("Time taken by SPBlas_coo sparse computation: %ld ms\n", diff_milli(&start, &now));
+  if (check_result(refsol, mysol, size) == 1)
+    printf("Result is ok!\n");
+  else
+    printf("Result is wrong!\n");
 
-  /*
+  timestamp(&start);
+  gsl_spblas_dgemv(CblasNoTrans, 1, sp_csc, x, 0, result);
+  timestamp(&now);
+  printf("Time taken by SPBlas_csc sparse computation: %ld ms\n", diff_milli(&start, &now));
+  if (check_result(refsol, mysol, size) == 1)
+    printf("Result is ok!\n");
+  else
+    printf("Result is wrong!\n");
+
+  timestamp(&start);
+  gsl_spblas_dgemv(CblasNoTrans, 1, sp_csr, x, 0, result);
+  timestamp(&now);
+  printf("Time taken by SPBlas_csr sparse computation: %ld ms\n", diff_milli(&start, &now));
+  if (check_result(refsol, mysol, size) == 1)
+    printf("Result is ok!\n");
+  else
+    printf("Result is wrong!\n");
+
+  
   // Convert mat to a sparse format: CSR
   CSR_Matrix csr;
   csr = convert_to_csr(mat,size,nnz);
@@ -266,7 +295,10 @@ int main(int argc, char *argv[])
   my_sparse_csr(csr.values, csr.col_i, csr.offset, vec, mysol, size);
   timestamp(&now);
   printf("Time taken by my sparse_csr matrix-vector product: %ld ms\n", diff_milli(&start, &now));
-  
+  if (check_result(refsol, mysol, size) == 1)
+    printf("Result is ok!\n");
+  else
+    printf("Result is wrong!\n");
 
 
   // Convert mat to a sparse format: CSC
@@ -278,7 +310,10 @@ int main(int argc, char *argv[])
   my_sparse_csc(csc.values, csc.row_j, csc.offset, vec, mysol, size);
   timestamp(&now);
   printf("Time taken by my sparse_csc matrix-vector product: %ld ms\n", diff_milli(&start, &now));
-  */
+  if (check_result(refsol, mysol, size) == 1)
+    printf("Result is ok!\n");
+  else
+    printf("Result is wrong!\n");
 
 
   // Convert mat to a sparse format: COO
@@ -287,15 +322,21 @@ int main(int argc, char *argv[])
 
   // Your own sparse implementation
   timestamp(&start);
-  my_sparse_coo(coo.values, coo.col_j, coo.row_i, vec, mysol, size);
+  my_sparse_coo(coo.values, coo.row_i, coo.col_j, vec, mysol, nnz, size);
   timestamp(&now);
   printf("Time taken by my sparse_coo matrix-vector product: %ld ms\n", diff_milli(&start, &now));
+  if (check_result(refsol, mysol, size) == 1)
+    printf("Result is ok!\n");
+  else
+    printf("Result is wrong!\n");
 
   // Compare times (and computation correctness!)
   if (check_result(refsol, mysol, size) == 1)
     printf("Result is ok!\n");
   else
     printf("Result is wrong!\n");
+  
+
 
 
   // Free resources
@@ -303,3 +344,5 @@ int main(int argc, char *argv[])
   free(vec);
   free(refsol);
   free(mysol);
+  return 0;
+}
