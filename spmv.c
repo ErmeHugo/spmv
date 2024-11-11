@@ -64,6 +64,18 @@ typedef struct {
     int *offset;      // Row pointer array
 } CSR_Matrix;
 
+typedef struct {
+    double *values;   // Non-zero values
+    int *col_j;       // Column indices of non-zero values
+    int *row_i;      // Row indices of non-zero values
+} COO_Matrix;
+
+typedef struct {
+    double *values;   // Non-zero values
+    int *offset;       // Column pointer array
+    int *row_j;      // Row indices of non-zero values
+} CSC_Matrix;
+
 CSR_Matrix convert_to_csr(double mat[], int size,int nnz)
 {
   CSR_Matrix csr;
@@ -85,6 +97,71 @@ CSR_Matrix convert_to_csr(double mat[], int size,int nnz)
   }
   csr.offset[size] = count;
   return csr;
+}
+
+COO_Matrix convert_to_coo(double mat[], int size, int nnz) {
+    COO_Matrix coo;
+
+    coo.row_i = (int *)malloc(nnz * sizeof(int));
+    coo.col_j = (int *)malloc(nnz * sizeof(int));
+    coo.values = (double *)malloc(nnz * sizeof(double));
+
+    // Fill COO structure
+    int count = 0;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            if (mat[i * size + j] != 0) {
+                coo.row_i[count] = i;
+                coo.col_j[count] = j;
+                coo.values[count] = mat[i * size + j];
+                count++;
+            }
+        }
+    }
+    return coo;
+}
+
+CSC_Matrix convert_to_csc(double mat[], int size, int nnz) {
+    CSC_Matrix csc;
+
+
+    csc.offset = (int *)malloc((size + 1) * sizeof(int));
+    csc.row_j = (int *)malloc(nnz * sizeof(int));
+    csc.values = (double *)malloc(nnz * sizeof(double));
+
+    // Initialize column offsets
+    for (int j = 0; j <= size; j++) {
+        csc.offset[j] = 0;
+    }
+
+    // Count non-zero entries in each column for col_offset
+    for (int j = 0; j < size; j++) {
+        for (int i = 0; i < size; i++) {
+            if (mat[i * size + j] != 0) {
+                csc.offset[j + 1]++;
+            }
+        }
+    }
+
+    // Compute cumulative sum for col_offset
+    for (int j = 1; j <= size; j++) {
+        csc.offset[j] += csc.offset[j - 1];
+    }
+
+    // Fill CSC structure
+    int *col_counts = (int *)calloc(size, sizeof(int));
+    for (int j = 0; j < size; j++) {
+        for (int i = 0; i < size; i++) {
+            if (mat[i * size + j] != 0) {
+                int index = csc.offset[j] + col_counts[j];
+                csc.row_j[index] = i;
+                csc.values[index] = mat[i * size + j];
+                col_counts[j]++;
+            }
+        }
+    }
+
+    return csc;
 }
 
 int main(int argc, char *argv[])
@@ -171,22 +248,49 @@ int main(int argc, char *argv[])
   //
   // Sparse computation using GSL's sparse algebra functions
   //
+
+  
   timestamp(&start);
   gsl_spblas_dgemv(CblasNoTrans, 1, sp, x, 0, result);
   timestamp(&now);
   printf("Time taken by SPBlas dense computation: %ld ms\n", diff_milli(&start, &now));
   
 
+  /*
   // Convert mat to a sparse format: CSR
   CSR_Matrix csr;
   csr = convert_to_csr(mat,size,nnz);
 
   // Your own sparse implementation
   timestamp(&start);
-  my_sparse(csr.values, csr.col_i, csr.offset, vec, mysol, size);
+  my_sparse_csr(csr.values, csr.col_i, csr.offset, vec, mysol, size);
   timestamp(&now);
-  printf("Time taken by my dense matrix-vector product: %ld ms\n", diff_milli(&start, &now));
+  printf("Time taken by my sparse_csr matrix-vector product: %ld ms\n", diff_milli(&start, &now));
   
+
+
+  // Convert mat to a sparse format: CSC
+  CSC_Matrix csc;
+  csc = convert_to_csc(mat,size,nnz);
+
+  // Your own sparse implementation
+  timestamp(&start);
+  my_sparse_csc(csc.values, csc.row_j, csc.offset, vec, mysol, size);
+  timestamp(&now);
+  printf("Time taken by my sparse_csc matrix-vector product: %ld ms\n", diff_milli(&start, &now));
+  */
+
+
+  // Convert mat to a sparse format: COO
+  COO_Matrix coo;
+  coo = convert_to_coo(mat,size,nnz);
+
+  // Your own sparse implementation
+  timestamp(&start);
+  my_sparse_coo(coo.values, coo.col_j, coo.row_i, vec, mysol, size);
+  timestamp(&now);
+  printf("Time taken by my sparse_coo matrix-vector product: %ld ms\n", diff_milli(&start, &now));
+
   // Compare times (and computation correctness!)
   if (check_result(refsol, mysol, size) == 1)
     printf("Result is ok!\n");
@@ -199,6 +303,3 @@ int main(int argc, char *argv[])
   free(vec);
   free(refsol);
   free(mysol);
-
-  return 0;
-}
