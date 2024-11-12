@@ -330,14 +330,6 @@ int main(int argc, char *argv[])
   else
     printf("Result is wrong!\n");
 
-  // Compare times (and computation correctness!)
-  if (check_result(refsol, mysol, size) == 1)
-    printf("Result is ok!\n");
-  else
-    printf("Result is wrong!\n");
-  
-
-
 
   // Free resources
   free(mat);
