@@ -31,6 +31,7 @@ make OPT="-O3 -xAVX"
 
 In order to use the mkl library please put the line 13 in comments and 
 decomment line 14 of the Makefile
+
 The file spmv_mkl.c is used for the calculation of mkl reference times
 
 
