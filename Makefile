@@ -11,6 +11,7 @@ PROG= spmv
 
 spmv : $(OBJ)
 	$(CC) $(OPT) $^ -lopenblas -lgsl -lgslcblas -o $(PROG)
+	#icc -o spmv spmv_mkl.c -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
 	./$(PROG)
 	$(RM) $(OBJ) $(PROG)
 
