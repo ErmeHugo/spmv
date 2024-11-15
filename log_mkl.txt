@@ -1,0 +1,8 @@
+Running CSR format:
+Time taken by MKL CSR computation: 986 ms
+
+Running CSC format:
+Time taken by MKL CSC computation: 3957 ms
+
+Running COO format:
+Time taken by MKL COO computation: 823 ms

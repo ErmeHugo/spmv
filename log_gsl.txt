@@ -1,0 +1,20 @@
+Matriz size: 16384 x 16384 (268435456 elements)
+26837519 non-zero elements (10.00%)
+
+Dense computation
+----------------
+Time taken by CBLAS dense computation: 135 ms
+Time taken by my dense matrix-vector product: 735 ms
+Result is ok!
+Time taken by SPBlas_coo sparse computation: 72 ms
+Result is ok!
+Time taken by SPBlas_csc sparse computation: 32 ms
+Result is ok!
+Time taken by SPBlas_csr sparse computation: 35 ms
+Result is ok!
+Time taken by my sparse_csr matrix-vector product: 89 ms
+Result is ok!
+Time taken by my sparse_csc matrix-vector product: 92 ms
+Result is ok!
+Time taken by my sparse_coo matrix-vector product: 97 ms
+Result is ok!
